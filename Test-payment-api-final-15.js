@@ -117,13 +117,13 @@ function validateRequestBody(requestBodyJson)
     for (const field of requiredHeaderFieldsTra)
 	{
         if (!Header?.[field]) 
-		{
+	{
             sendErrorResponse(401, "Unauthorized", `Missing or invalid field: ${field}`);
             return null;
         }
 	    if (Header[field].length > 16 || !alphanumericRegex.test(Header[field]))
-		{
-			sendErrorResponseCode(Header, "ER12", `${field} must be alphanumeric and no longer than 16 characters`);			
+	{
+	    sendErrorResponseCode(Header, "ER12", `${field} must be alphanumeric and no longer than 16 characters`);			
             return null;
         }
     }
@@ -132,77 +132,89 @@ function validateRequestBody(requestBodyJson)
 
     for (const field of requiredHeaderFields) 
 	{
-        if (!Header?.[field]) {
+        if (!Header?.[field]) 
+	{
             sendErrorResponse(400, "Bad Request", `Missing or invalid field: ${field}`);
             return null;
         }
 	    
-		if (Header[field].length > 16 || !alphanumericRegex.test(Header[field]))
-		{
-			sendErrorResponseCode(Header, "ER12", `${field} must be alphanumeric and no longer than 16 characters`);			
+	if (Header[field].length > 16 || !alphanumericRegex.test(Header[field]))
+	{
+	    sendErrorResponseCode(Header, "ER12", `${field} must be alphanumeric and no longer than 16 characters`);			
             return null;
         }
     }
 
     const debitAccount = Body?.Debit_Acct_No;
-    if (debitAccounts[debitAccount].owner !== Header.Corp_ID) {
+    if (debitAccounts[debitAccount].owner !== Header.Corp_ID) 
+    {
         sendErrorResponse(401, "Unauthorized", "LDAP to CORP Mismatch");
         return null;
     }
      
-    if (!debitAccount || !debitAccounts[debitAccount]) {
+    if (!debitAccount || !debitAccounts[debitAccount])
+    {
         sendErrorResponseCode(Header, "ER002", "Invalid or unregistered Debit_Acct_No.");
         return null;
     }
 
     const amount = parseFloat(Body?.Amount);
-    if (isNaN(amount) || amount <= 0) {
+    if (isNaN(amount) || amount <= 0) 
+    {
         sendErrorResponseCode(Header, "ER12", "Amount must be a positive number greater than zero.");
         return null;
     }
 
-    if (amount > debitAccounts[debitAccount].balance) {
+    if (amount > debitAccounts[debitAccount].balance) 
+    {
         sendErrorResponseCode(Header, "ER12", "Insufficient balance in the Debit Account.");
         return null;
     }
 
     const mode = Body?.Mode_of_Pay;
-    if (!validModes.includes(mode)) {
+    if (!validModes.includes(mode)) 
+    {
         sendErrorResponseCode(Header, "ER002", "Invalid or missing Mode_of_Pay. Valid options are 'FT', 'RTGS', or 'IMPS'.");
         return null;
     }
 
-    if (mode === "RTGS" && amount < 200000) {
+    if (mode === "RTGS" && amount < 200000) 
+    {
         sendErrorResponseCode(Header, "ER002", "For RTGS, Amount must be ≥ Rs 2,00,000.");
         return null;
     }
 
-    if ((mode === "FT" || mode === "IMPS") && amount >= 200000) {
+    if ((mode === "FT" || mode === "IMPS") && amount >= 200000)
+    {
         sendErrorResponseCode(Header, "ER002", "For FT and IMPS, Amount must be < Rs 2,00,000.");
         return null;
     }
 	
 	
     // Validate Debit_Acct_Name and Debit_IFSC
-	const debitAcctName = Body?.Debit_Acct_Name;
+    const debitAcctName = Body?.Debit_Acct_Name;
     const debitIfsc = Body?.Debit_IFSC;
 
     // Debit_Acct_Name validation
-    if (!debitAcctName) {
+    if (!debitAcctName) 
+    {
         sendErrorResponse(400, "Bad Request", "Debit_Acct_Name must not be empty.");
         return null;
     }
-    if (debitAcctName.length > 20 || !nonSpecialCharsRegex.test(debitAcctName)) {
+    if (debitAcctName.length > 20 || !nonSpecialCharsRegex.test(debitAcctName)) 
+    {
         sendErrorResponse(400, "Bad Request", "Debit_Acct_Name must be alphanumeric and no longer than 20 characters.");
         return null;
     }
 
     // Debit_IFSC validation
-    if (!debitIfsc) {
+    if (!debitIfsc)
+    {
         sendErrorResponse(400, "Bad Request", "Debit_IFSC must not be empty.");
         return null;
     }
-    if (debitIfsc.length > 20 || !nonSpecialCharsRegex.test(debitIfsc)) {
+    if (debitIfsc.length > 20 || !nonSpecialCharsRegex.test(debitIfsc))
+    {
         sendErrorResponse(400, "Bad Request", "Debit_IFSC must be alphanumeric and no longer than 20 characters.");
         return null;
     }
@@ -217,25 +229,30 @@ function validateRequestBody(requestBodyJson)
     ];
 
     // Loop through each field and apply the validation
-    for (const field of bodyFields) {
+    for (const field of bodyFields) 
+    {
         const fieldValue = Body?.[field];
 
-        if (fieldValue == null || fieldValue === "") {
+        if (fieldValue == null || fieldValue === "") 
+	{
             sendErrorResponse(400, "Bad Request", `${field} must not be null or empty.`);
             return null;
         }
 
-        if (fieldValue.length > 20) {
+        if (fieldValue.length > 20) 
+	{
             sendErrorResponse(400, "Bad Request", `${field} must be no longer than 20 characters.`);
             return null;
         }
 
-        if (field === "Ben_Email" && !emailRegex.test(fieldValue)) {
+        if (field === "Ben_Email" && !emailRegex.test(fieldValue)) 
+	{
             sendErrorResponse(400, "Bad Request", "Invalid email format for Ben_Email.");
             return null;
         }
 
-        if (field !== "Ben_Email" && !nonSpecialCharsRegex.test(fieldValue)) {
+        if (field !== "Ben_Email" && !nonSpecialCharsRegex.test(fieldValue)) 
+	{
             sendErrorResponse(400, "Bad Request", `${field} must be alphanumeric and no longer than 20 characters (special characters not allowed).`);
             return null;
         }
@@ -243,32 +260,39 @@ function validateRequestBody(requestBodyJson)
 	
 	
     var authHeader = apim.getvariable("request.headers.authorization");
-    if (!authHeader || !authHeader.startsWith("Basic ")) {
+    if (!authHeader || !authHeader.startsWith("Basic ")) 
+    {
         sendErrorResponse(401, "Unauthorized", "Invalid LDAP Format", "LDAP ID or Password not found");
         return;
     }
     var base64Credentials = authHeader.substring(6);
     let decodedCredentials;
-    try {
+    try
+    {
         decodedCredentials = Buffer.from(base64Credentials, "base64").toString();
-    } catch (err) {
+    } 
+    catch (err)
+    {
         sendErrorResponse(400, "Bad Request", "Invalid Base64 encoding in Authorization Header", err.message);
         return;
     }
 
-    if (!decodedCredentials.includes(":")) {
+    if (!decodedCredentials.includes(":")) 
+    {
         sendErrorResponse(401, "Unauthorized", "Malformed Authorization Header");
         return;
     }
 
     var [username, password] = decodedCredentials.split(":");
     var isAuthorized = authorizedUsers.some(user => user.username === username && user.password === password);
-    if (!isAuthorized) {
+    if (!isAuthorized) 
+    {
         sendErrorResponse(401, "Unauthorized", "LDAP ID or Password is wrong");
         return;
     }
 
-    if (Header.Corp_ID !== username) {
+    if (Header.Corp_ID !== username) 
+    {
         sendErrorResponse(401, "Unauthorized", "LDAP to CORP Mismatched", "LDAP ID and CORP ID do not match");
         return;
     }
@@ -282,12 +306,8 @@ try {
 
     const requestBodyJson = parseRequestBody();
     if (!requestBodyJson) return;
-
-		const { Header, Body } = validateRequestBody(requestBodyJson) || {};
-		if (!Header || !Body) return;
-
-    
-
+    const { Header, Body } = validateRequestBody(requestBodyJson) || {};
+    if (!Header || !Body) return;
     debitAccounts[Body.Debit_Acct_No].balance -= parseFloat(Body.Amount);
 
     const response = {
@@ -307,19 +327,20 @@ try {
                 UTRNo: generateRandomString("UTR", 14),
                 PONum: generateRandomString("PO", 12),
                 Debit_Acct_No: Body.Debit_Acct_No,
-				Debit_Acct_Name: Body.Debit_Acct_Name,
-				Debit_IFSC: Body.Debit_IFSC,
+		Debit_Acct_Name: Body.Debit_Acct_Name,
+		Debit_IFSC: Body.Debit_IFSC,
                 Amount: Body.Amount,
                 Remaining_Balance: debitAccounts[Body.Debit_Acct_No].balance,
                 BenIFSC: Body.Ben_IFSC,
-				Ben_Acct_No: Body.Ben_Acct_No,
+		Ben_Acct_No: Body.Ben_Acct_No,
                 Ben_Name: Body.Ben_Name,
-				Ben_Email: Body.Ben_Email,
+		Ben_Email: Body.Ben_Email,
                 Ben_Mobile: Body.Ben_Mobile,
                 Txn_Time: getISTDateTime(),
                 Mode_of_Pay: Body.Mode_of_Pay
             },
-            Signature: {
+            Signature:
+	    {
                 Signature: "Signature"
             }
         }
@@ -328,6 +349,7 @@ try {
     apim.setvariable('message.status.code', 200);
     apim.setvariable('message.body', JSON.stringify(response));
 
-} catch (error) {
+} 
+catch (error) {
     sendErrorResponse(500, "Internal Server Error", "An unexpected error occurred", error.message);
 }
